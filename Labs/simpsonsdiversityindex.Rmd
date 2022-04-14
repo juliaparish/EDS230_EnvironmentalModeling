@@ -1,0 +1,31 @@
+---
+title: "simpsondiversityindex"
+author: "Julia Parish"
+date: '2022-04-14'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(here)
+library(tidyverse)
+```
+
+```{r}
+# get the function
+source(here("R/compute_diversity.R"))
+```
+
+```{r}
+# sampling categorical data
+# create possible values
+flower_types = c("iris","daisy","poppy","rose","dandelion","weed","violet")
+
+# sample (with replacement)
+garden = sample(flower_types, size=20, replace=T)
+compute_diversity(garden)
+```
+
