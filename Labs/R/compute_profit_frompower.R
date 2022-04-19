@@ -20,7 +20,7 @@ compute_profit_frompower = function(energy, year, price, discount=0.12) {
   yearprofit$net =  yearprofit$energy*price
 
   # note how discount is passed through to this function
-  # remember to normalize the year to start year e.g the first year
+  # remember to normalize the year to start year e.g the first year set as baseine
   yearprofit= yearprofit %>% 
       mutate(netpre = compute_NPV(value=net, time=year-year[1], discount=discount ))
   

@@ -231,10 +231,14 @@ profit_solar = compute_profit_frompower(energy=annual_elect$elect,
 
 head(profit_solar)
 
+```
+
+
+```{r}
 ggplot(profit_solar, aes(as.factor(year), netpre, group=year))+geom_boxplot()+
   labs(y="Profit in current $", x="Year")
-
 ```
+
 
 # Putting it all together
 
