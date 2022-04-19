@@ -26,7 +26,7 @@ factors = c("Tmincoeff1", "Tmincoeff2", "Pcoeff2")
 # Decide How many parameter sets to run
 nsets=100
 
-# choose distributions for parameters - this would come from
+# choose distributions for parameters - this would come from https://www.stat.umn.edu/geyer/old/5101/rlook.html
 # what you know about the likely range of variation
 q = c("qnorm", "qnorm", "qunif")
 q.arg = list(list(mean=-0.015,sd=0.005), list(mean=-0.0046, sd=0.001), list(min=0.00429, max=0.00431))
