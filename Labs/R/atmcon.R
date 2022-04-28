@@ -21,7 +21,7 @@ atmcon <- function(vm, h, zm = (h + 200), k = 0.1, kd = 0.7){
   z = k*h
   
   # atmospheric conductance equation
-  ac = vm / (6.25*(ln((zm - zd)/z))**2)
+  ac = vm / (6.25*(log((zm - zd)/z))**2)
   
   return(ac)
   # names the output set equal to itself so you can call the output with LHS

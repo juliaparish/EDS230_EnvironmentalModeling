@@ -1,6 +1,6 @@
 #' Compute Atmospheric Conductance
 #'
-#' THis function atmospheric conductance as a function of windspeed, and vegetation cahracteristics
+#' This function atmospheric conductance as a function of windspeed, and vegetation cahracteristics
 #' @param       v windspeed (m/s)
 #' @param      height vegetation height (m)
 #' @param       zm measurement height of wind (m) (default 30)
@@ -11,7 +11,6 @@
 #' @return  Conductance (mm/s)
 
 Catm = function(v, height, zm_add=200, k_o=0.1, k_d=0.7) {
-
 
     zd = k_d*height
     zo = k_o*height
