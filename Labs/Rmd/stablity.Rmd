@@ -13,11 +13,13 @@ library(deSolve)
 
 Example of exploring stability with our proportional harvest model
 
-```{r stability2}
-
+```{r stability dharvest}
 source("../R/dharvest.R")
 dharvest
+```
 
+
+```{r stability2}
 # given some forest characteristics - lets look at derivatives under different harvest rates
 lowHrate = 0.015
 gps = list(harv=lowHrate, K=100, r=0.05)
@@ -31,7 +33,10 @@ findstable$dervHlow= unlist(findstable$Ccurr %>% map(~dharvest(parms=gps, Time=N
                                                   
 ggplot(findstable, aes(Ccurr, dervHlow))+geom_point()+geom_hline(yintercept = 0, col="red")+
   labs(y="Derivative\n (Rate of change of forest carbon) (kg/C/year)", x="Current Forest Carbon Stock (kgC)")
+```
 
+
+```{r stability2}
 # Populations will be stable when derivative is zero!
 
 # look at a different harvest rate
