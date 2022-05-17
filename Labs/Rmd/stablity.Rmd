@@ -14,7 +14,7 @@ library(deSolve)
 Example of exploring stability with our proportional harvest model
 
 ```{r stability dharvest}
-source("../R/dharvest.R")
+source("Labs/R/dharvest.R")
 dharvest
 ```
 
@@ -25,13 +25,16 @@ lowHrate = 0.015
 gps = list(harv=lowHrate, K=100, r=0.05)
 
 # look at the derivative over a range of forest sizes
+findstable = data.frame(Ccurr = seq(from = 1, to = 100, by = 5))
 
-findstable = data.frame(Ccurr=seq(from=1, to=100, by=5))
 # notice use of Time=NULL, and map to compute derivative
 # for different values of forest biomass
-findstable$dervHlow= unlist(findstable$Ccurr %>% map(~dharvest(parms=gps, Time=NULL, P=.x) ))
+findstable$dervHlow= unlist(findstable$Ccurr %>% 
+                              map(~dharvest(parms=gps, Time=NULL, P=.x)))
                                                   
-ggplot(findstable, aes(Ccurr, dervHlow))+geom_point()+geom_hline(yintercept = 0, col="red")+
+ggplot(findstable, aes(Ccurr, dervHlow)) +
+  geom_point() +
+  geom_hline(yintercept = 0, col="red") +
   labs(y="Derivative\n (Rate of change of forest carbon) (kg/C/year)", x="Current Forest Carbon Stock (kgC)")
 ```
 
@@ -57,35 +60,83 @@ ggplot(tmp, aes(Ccurr, value, color=HarvestRate))+geom_point()+geom_hline(yinter
 
 # notice how with higher harvest rates the stable population will be lower
 
-
-
-
 ```
 
 Look at the above graphs to determine what stable forest carbon is likely to be given different harvest rates
 
 Try it to find out if you are right
-```{r  check}
-
+```{r  check low}
 tm = seq(from=1, to=500)
 gps = list(harv=lowHrate, K=100, r=0.05)
 Pinitial=50
+
 res = ode(Pinitial,tm, dharvest, gps)
+
 colnames(res)=c("time","carbon")
 ggplot(as.data.frame(res), aes(time, carbon))+geom_point()+
   labs(y="Forest Biomass (kgC)", x="Year", title="low harvest rate")
-  
+```
 
 
-
+```{r  check high}
 gps = list(harv=highHrate, K=100, r=0.05)
 Pinitial=50
-res = ode(Pinitial,tm, dharvest, gps)
+res = ode(Pinitial, tm, dharvest, gps)
+
 colnames(res)=c("time","carbon")
 ggplot(as.data.frame(res), aes(time, carbon))+geom_point()+
  labs(y="Forest Biomass (kgC)", x="Year", title="High Harvest Rate")
+```
 
+# In class
 
+```{r stability dharvest_fixed}
+source("Labs/R/dharvestfixed.R")
+dharvestfixed
+```
 
+```{r}
+# class challenge
+
+# hrate = 0.01
+# gps = list(harv = hrate, K = 1000, r = 0.05)
+# 
+# # look at the derivative over a range of forest sizes
+# findstable2 = data.frame(Ccurr = seq(from=1, to=100, by=5))
+# 
+# # notice use of Time=NULL, and map to compute derivative
+# # for different values of forest biomass
+# findstable2$dervHrate = unlist(findstable2$Ccurr %>% map(~dharvestfixed(parms = gps, 
+#                                                                   Time = NULL, 
+#                                                                   P = .x)))
+#                                                   
+# ggplot(findstable2, aes(Ccurr, dervHrate))+
+#   geom_point() +
+#   geom_hline(yintercept = 0, col="red") +
+#   labs(y="Derivative\n (Rate of change of forest carbon) (kg/C/year)", x="Current Forest Carbon Stock (kgC)")
 
 ```
+
+```{r}
+
+carbon <- seq(from = 0, to = 1000)
+ 
+dcarbon <- unlist(carbon %>% 
+                   map(dharvestfixed, Time = NULL, parms = list(r = 0.05,
+                                                                K = 1000,
+                                                                mincarbon = 0,
+                                                                harv = 10)))
+c2 <- data.frame(carbon, dcarbon)
+
+ggplot(c2, aes(carbon, dcarbon)) +
+  geom_point() +
+  geom_hline(yintercept = 0, col = "red") +
+  labs(y = "Derivative\n (Rate of change of forest carbon",
+       x = "Current Forest Carbon Stock (kgC)")
+
+
+head(c2)
+  
+```
+
+
