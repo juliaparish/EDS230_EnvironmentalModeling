@@ -13,13 +13,14 @@ library(sensitivity)
 library(lhs)
 library(purrr)
 library(ggpubr)
+library(here)
 ```
 
 Predictor Prey - 
 
 
 ```{r}
-source("../R/lotvmod.R")
+source("Labs/R/lotvmod.R")
 
 # initial conditions
 currpop = c(prey=10, pred=1)
@@ -28,13 +29,14 @@ currpop = c(prey=10, pred=1)
 days = seq(from=1, to=100, by=1)
 
 # set parameters
-pars = c(rprey=0.5, alpha=0.3, eff=0.2,pmort=0.2, K=100)
+pars = c(rprey=0.5, alpha=0.3, eff=0.2, pmort=0.2, K=100)
 
 # run the model
 res = ode(func=lotvmod, y=currpop, times=days, parms=pars)
 
 # graph the results
 head(res)
+
 # rearrange for easy plotting
 ressimple = as.data.frame(res) %>% gather(key="animal", value="pop",-time)
 p1=ggplot(ressimple, aes(time, pop, col=animal))+geom_line()
@@ -113,7 +115,7 @@ Remember steps
 * Graph and compute sensitivity statistics
 
 ```{r odesen}
-source("../R/lotvmodK.R")
+source("Labs/R/lotvmodK.R")
 library(lhs)
 library(epiR)
 
@@ -121,7 +123,7 @@ library(epiR)
 factors = c("rprey","K","alpha","eff","pmort")
 nsets=500
 
-# create a latin hyper cube
+# create a latin hyper cube - define LHS object
 sens_pp = randomLHS(nsets, length(factors))
 colnames(sens_pp)=factors
 
@@ -149,8 +151,8 @@ return(list(maxprey=maxprey, minprey=minprey, maxpred=maxpred, minpred=minpred))
 
 p_wrapper = function(rprey,alpha, eff, pmort, K, currpop, days, func) {
     parms = list(rprey=rprey, alpha=alpha, eff=eff, pmort=pmort, K=K)
-    result = ode(y=currpop, times=days, func=func, parms=parms) 
-    colnames(result)=c("time","prey","pred")
+    result = ode(y=currpop, times=days, func=func, parms=parms) # runs ODE
+    colnames(result)=c("time","prey","pred") 
   # get metrics
   metrics=compute_metrics(as.data.frame(result))
   return(metrics)
@@ -158,36 +160,46 @@ p_wrapper = function(rprey,alpha, eff, pmort, K, currpop, days, func) {
 
 
 # run our model for all parameters and extract the results
-currpop=c(prey=1, pred=1)
+currpop = c(prey=1, pred=1)
 days = seq(from=1,to=500)
 allresults = as.data.frame(sens_pp) %>% pmap(p_wrapper, currpop=currpop, days=days, func=lotvmodK)
- 
+```
+
+
+```{r odesen}
 # take results back to unlisted form
 allres = allresults %>% map_dfr(`[`,c("maxprey","minprey","maxpred","minpred"))
-
 
 # range of response across parameter uncertainty
 allresl = allres %>% gather(key="metric",value="pop")
 ggplot(allresl, aes(metric, pop))+geom_boxplot()
+```
 
+
+```{r odesen}
 # dealing with different scales
 ggplot(allresl, aes(metric, pop, col=metric))+geom_boxplot()+facet_wrap(~metric, scales="free")
+```
+
+
+```{r odesen}
 # plot cummulative densities
-
 ggplot(allresl, aes(pop, col=metric))+stat_ecdf(geom="line")+facet_wrap(~metric, scales="free")
+```
 
+
+```{r}
 # compute PRCCs using epi.prcc
 # lets do first for maxpred
 
 epi.prcc(cbind.data.frame(sens_pp, allres$maxpred))
-
-# try minprey
-epi.prcc(cbind.data.frame(sens_pp, allres$minprey))
-
-
 ```
 
 
+```{r}
+# try minprey
+epi.prcc(cbind.data.frame(sens_pp, allres$minprey))
+```
 
 How do we think about stablity?
 
@@ -216,35 +228,47 @@ Try setting you initial conditions close to these values and see what happens
 
 
 ```{r stabilitynew}
-
 # set parameter list
 pars = data.frame(rprey=0.1, alpha=0.6, eff=0.8,pmort=0.4, K=200)
 
 # now lets try initial conditions that will be stable
 preyi = with(pars, pmort/(eff*alpha)) 
 predi = with(pars, rprey/alpha*(1-preyi/K)) 
+
 # times when you want to evaluate
 days = seq(from=1,to=500)
 
 # lets first see what happens when we start with 1 of each
 currpop=c(prey=1, pred=1)
+
 # run our differential equation solver
 res = ode(func=lotvmodK, y=currpop, times=days, parms=pars)
+
 # extract the results
 res_smallstart = as.data.frame(res) %>% gather(key="animal", value="pop",-time)
+
 # graph both populations over time
 p1=ggplot(res_smallstart, aes(time, pop, col=animal))+geom_line()
 p1
+```
 
+
+```{r }
 # lets first see what happens when we start our estimates of stable populations
 stablepop = c(prey=preyi, pred=predi)
 res = ode(func=lotvmodK, y=stablepop, times=days, parms=pars)
+
 # estract the results
 res_stablestart = as.data.frame(res) %>% gather(key="animal", value="pop",-time)
-# graph both populations over time
-p2=ggplot(res_stablestart, aes(time, pop, col=animal))+geom_line()
-p2
 
+# graph both populations over time
+p2= ggplot(res_stablestart, aes(time, pop, col=animal))+
+  geom_line()
+p2
+```
+
+
+```{r}
 # of course in this case these are not very realistic populations, so it is unlikely that you would get to something stable given parameters - but if they were different you might find a stable and realistic population
 
 # try
@@ -252,9 +276,13 @@ p2
 And just for fun
 
 Lets look at a Lorenz System with its interesting dynamics
+
 ```{r lorenze}
 # lorenze
 source("../R/lorenz.R")
+```
+
+```{r }
 pars = list(a=10,b=28,c=8/3)
 res = ode(func=lorenz, c(x=0.1,y=0,z=0), times=seq(0,50,by=0.01), parms=pars)
 
@@ -264,7 +292,10 @@ ggplot(as.data.frame(res), aes(y,z, col=time))+geom_point()
 
 ressimple = as.data.frame(res) %>% gather(key="var", value="value",-time)
 ggplot(ressimple, aes(time, value, col=var))+geom_line()
+```
 
+
+```{r }
 # try with different initial conditions
 pars = list(a=15,b=28,c=8/4)
 res = ode(func=lorenz, c(x=0.3,y=5,z=10), times=seq(0,50,by=0.01), parms=pars)
@@ -275,7 +306,7 @@ ggplot(as.data.frame(res), aes(y,z, col=time))+geom_point()+scale_colour_gradien
 
 ressimple = as.data.frame(res) %>% gather(key="var", value="value",-time)
 ggplot(ressimple, aes(time, value, col=var))+geom_line()
-
-
 ```
+
+
 
