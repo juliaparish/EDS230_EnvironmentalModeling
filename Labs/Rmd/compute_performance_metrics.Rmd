@@ -16,26 +16,40 @@ library(ggpubr)
 # Graph
 
 ```{r simple}
-
-sager = read.table("../Data/sager.txt", header=T)
+sager = read.table("Labs/data/sager.txt", header=T)
 head(sager)
 
 # add date
 sager = sager %>% mutate(date = paste(day,month,year, sep="/"))
 sager$date = as.Date(sager$date,"%d/%m/%Y")
+```
 
+
+```{r simple}
 # plot
 sagerl = sager %>% pivot_longer(cols=c("model","obs"), names_to="source",
                                   values_to="flow")
+```
 
+
+```{r }
 # basic plot
-ggplot(sagerl, aes(date, flow, col=source, linetype=source))+geom_line()
+ggplot(sagerl, aes(date, flow, col=source, linetype=source))+
+  geom_line()
+```
 
+
+
+```{r simple}
 # change access to get a closer look at performance at low values
 # when you have high dynamic range (lots of large and small values), taking log can help
 # with visualization
-ggplot(sagerl, aes(date, flow, col=source, linetype=source))+geom_line()+scale_y_continuous(trans="log")+labs(y="streamflow mm/day")
+ggplot(sagerl, aes(date, flow, col=source, linetype=source))+
+  geom_line()+scale_y_continuous(trans="log")+labs(y="streamflow mm/day")
+```
 
+
+```{r simple}
 # look at it another way
 ggplot(sager, aes(obs, model))+geom_point()+geom_abline(intercept=0, slope=1, col="red")
 
@@ -45,25 +59,26 @@ ggplot(sager, aes(obs, model))+geom_point()+geom_abline(intercept=0, slope=1, co
 # Measure Performance using different metrics
 
 ```{r}
-
-
-source("../R/nse.R")
-
-source("../R/relerr.R")
-
-
-source("../R/cper.R")
+source("Labs/R/nse.R")
+source("Labs/R/relerr.R")
+source("Labs/R/cper.R")
 
 nse
 relerr
 cper
+```
+
+
+```{r}
 nse(m=sager$model, o=sager$obs)
 
 relerr(m=sager$model, o=sager$obs)*100
 
 cper(m=sager$model, o=sager$obs, weight.nse=0.8)
+```
 
 
+```{r}
 ```
 
 # Scale and subsetting
@@ -88,7 +103,10 @@ tmp = sager %>% group_by(month, year) %>% summarize(model=sum(model), obs=sum(ob
 # now extract august
 sager_aug = subset(tmp, month==8)
 cor(sager_aug$model, sager_aug$obs)
+```
 
+
+```{r}
 # turn your evaluation metric into a function
 source("../R/compute_lowflowmetrics.R")
 compute_lowflowmetrics
@@ -96,10 +114,8 @@ compute_lowflowmetrics(m=sager$model,o=sager$obs, month=sager$month, day=sager$d
 
 # use different low flow months
 compute_lowflowmetrics(m=sager$model,o=sager$obs, month=sager$month, day=sager$day, year=sager$year, wy=sager$wy, low_flow_months = c(7:9))
-
-
 ```
-  
+
 
 # try another metric
 
@@ -155,93 +171,138 @@ is a different model run for Sagehen Creek
 * sagerm.txt
 
 
-
 ```{r multipel}
-
 # multiple results - lets say we've run the model for multiple years, each column
 # is streamflow for a different parameter set
-msage = read.table("../Data/sagerm.txt", header=T)
+msage = read.table("Labs/Data/sagerm.txt", header=T)
 
-# lets say we know the start date from our earlier output
 msage$date = sager$date
 head(msage)
+```
+
+
+```{r multipel}
+# lets say we know the start date from our earlier output
+
 msage$month = sager$month
 msage$year = sager$year
 msage$day = sager$day
 msage$wy = sager$wy
+```
 
+
+```{r }
 # and we still have observed data from above
 
 
 # how can we plot all results - lets plot water year 1970 otherwise its hard to see
 msagel = msage %>% pivot_longer(cols=!c(date, month, year, day,wy), names_to="run", values_to="flow")
+```
 
+
+```{r }
 p1=ggplot(subset(msagel, wy == 1970), aes(as.Date(date), flow, col=run))+geom_line()+theme(legend.position = "none")
 p1
+```
+
+
+```{r }
 # lets add observed streamflow
-p1+geom_line(data=subset(sager, wy == 1970), aes(as.Date(date), obs), size=2, col="black", linetype=2)+labs(y="Streamflow", x="Date")
+p1+
+  geom_line(data=subset(sager, wy == 1970), aes(as.Date(date), obs), size=2, col="black", linetype=2)+labs(y="Streamflow", x="Date")
+```
 
-
+```{r }
 # compute performance measures for all output
 res = msage %>% select(!c("date","month","year","day","wy")) %>%
       map_dbl(nse, o=sager$obs )
 
 head(res)
+```
 
+```{r }
 # another example using our low flow statistics
 # use apply to compute for all the data
 # using the updated low flow metrics routing that also computed combined metrics
 
-source("../R/compute_lowflowmetrics_all.R")
-res = msage %>% select(-date, -month, -day, -year, -wy ) %>% map_df(compute_lowflowmetrics_all, o=sager$obs, month=msage$month, day=msage$day, year=msage$year, wy=msage$wy)
+source("Labs/R/compute_lowflowmetrics_all.R")
+```
 
 
+```{r }
+# what is the performance of each run
+res = msage %>% 
+  select(-date, -month, -day, -year, -wy ) %>%
+  map_df(compute_lowflowmetrics_all, 
+         o=sager$obs, 
+         month=msage$month,
+         day=msage$day, 
+         year=msage$year, 
+         wy=msage$wy) # applies metric to every columns
+
+# results gives combined metric for each column
+```
+
+
+```{r }
 # interesting to look at range of metrics - could use this to decide on
 # acceptable values
 summary(res)
+```
 
 
+```{r }
 # graph range of performance measures
 resl = res %>% pivot_longer(cols=everything(), names_to="metric", values_to="value")
-ggplot(resl, aes(metric, value))+geom_boxplot()+facet_wrap(~metric, scales="free")
+```
 
+
+```{r }
+ggplot(resl, aes(metric, value))+
+  geom_boxplot()+facet_wrap(~metric, scales="free")
+```
+
+
+```{r }
 # try this
 # assign an identifier to each row, use the same identify for columns of original streamflow data
 # we can then use that to pick data
 res$run = seq(from=1,to=nrow(res))
 head(msage)
-colnames(msage)=c(res$run, "date","month","year","day","wy")
+```
 
+
+```{r }
+colnames(msage)=c(res$run, "date","month","year","day","wy")
+```
+
+
+```{r }
 # best one
 best = res[which.max(res$combined),]
-msagel  =  msage %>% pivot_longer(cols=!c(date, month, year, day,wy), names_to="run", values_to="flow")
-ggplot(subset(msagel, run == best$run), aes(date, flow)) + geom_line()
+
+msagel  =  msage %>% 
+  pivot_longer(cols=!c(date, month, year, day,wy), 
+               names_to="run", 
+               values_to="flow")
+```
 
 
+```{r }
+ggplot(subset(msagel, run == best$run), aes(date, flow)) + 
+  geom_line()
+```
+
+
+```{r }
 # or show with all runs
 # label runs for legends
 # all just show 1970 so easy to see
 msagel = msagel %>% mutate(best = ifelse(run==best$run, TRUE, FALSE))
+```
+
+
+```{r }
 ggplot(subset(msagel, wy==1970), aes(date, flow, col=best))+geom_line()
-
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
